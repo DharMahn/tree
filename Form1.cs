@@ -23,6 +23,11 @@ namespace trees
             WindowState = FormWindowState.Maximized;
             Bounds = Screen.PrimaryScreen.Bounds;
             MaximizedBounds = Screen.PrimaryScreen.Bounds;
+            dotSearchRadius = (float)numericUpDown1.Value;
+            dotElimRadius = (float)numericUpDown2.Value;
+            branchLen = (float)numericUpDown3.Value;
+            boundsBorder = (int)numericUpDown4.Value;
+            RegenerateDotBounds();
             Reset();
             DoubleBuffered = true;
             //for (int i = 0; i < 20; i++)
@@ -34,7 +39,7 @@ namespace trees
         void RegenerateDots()
         {
             targetDots = new();
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 3000; i++)
             {
                 targetDots.Add(new(r.Next(branchBounds.Left, branchBounds.Right), r.Next(branchBounds.Top, branchBounds.Bottom)));
             }
@@ -55,7 +60,6 @@ namespace trees
         {
             treeTexture = new Bitmap(ClientSize.Width, ClientSize.Height);
             branches = new();
-            RegenerateDotBounds();
             RegenerateDots();
             branches.Add(new(new(treeTexture.Width / 2, treeTexture.Height), new(treeTexture.Width / 2, treeTexture.Height - branchLen)));
             stem = branches.Last();
@@ -135,12 +139,11 @@ namespace trees
             {
                 g.FillRectangle(Brushes.Blue, dot.X - 2, dot.Y - 2, 5, 5);
             }
-            //g.DrawRectangle(Pens.Blue, branchBounds);
 
-            foreach (Branch branch in branches)
-            {
-                g.FillEllipse(Brushes.DarkGreen, branch.End.X - leafRadius, branch.End.Y - leafRadius, leafRadius * 2, leafRadius * 2);
-            }
+            //foreach (Branch branch in branches)
+            //{
+            //    g.FillEllipse(Brushes.DarkGreen, branch.End.X - leafRadius, branch.End.Y - leafRadius, leafRadius * 2, leafRadius * 2);
+            //}
             foreach (Branch branch in branches)
             {
                 g.DrawLine(branchCol, branch.Start.X, branch.Start.Y, branch.End.X, branch.End.Y);
@@ -201,8 +204,8 @@ namespace trees
             RegenerateDotBounds(branchBounds);
             RegenerateDots();
             //Reset();
-            UpdateBranches();
-            DrawBranches();
+            //UpdateBranches();
+            //DrawBranches();
             Invalidate();
         }
 
@@ -249,7 +252,7 @@ namespace trees
                 Point temp = start;
             }
             dragging = false;
-            //branchBounds = GetNormalizedRectangle(start,end);
+            branchBounds = GetNormalizedRectangle(start,end);
             //Reset();
             RegenerateDotBounds(branchBounds);
             RegenerateDots();
@@ -265,6 +268,8 @@ namespace trees
                 DrawBranches();
                 Invalidate();
             }
+            e.Handled = true;
+            e.SuppressKeyPress = true;
         }
 
         private Rectangle GetNormalizedRectangle(Point p1, Point p2)
