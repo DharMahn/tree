@@ -16,10 +16,10 @@ namespace trees
         float dotElimRadius = 25;
         Graphics g;
         float leafRadius = 25;
+        bool leaves = false;
         public Form1()
         {
             InitializeComponent();
-            KeyPreview = true;
             WindowState = FormWindowState.Maximized;
             Bounds = Screen.PrimaryScreen.Bounds;
             MaximizedBounds = Screen.PrimaryScreen.Bounds;
@@ -36,6 +36,16 @@ namespace trees
             //}
             DrawBranches();
         }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Space)
+            {
+                UpdateBranches();
+                DrawBranches();
+                Invalidate();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
         void RegenerateDots()
         {
             targetDots = new();
@@ -46,7 +56,7 @@ namespace trees
         }
         void RegenerateDotBounds(Rectangle? rect = null)
         {
-            if (rect==null)
+            if (rect == null)
             {
                 branchBounds = new(boundsBorder, boundsBorder, ClientSize.Width - (boundsBorder * 2), ClientSize.Height - (boundsBorder * 2));
 
@@ -125,7 +135,7 @@ namespace trees
                 else
                 {
                     //use this for optimization
-                    branch.Finished = true;
+                    //branch.Finished = true;
                     //branches.Remove(branch);
                 }
             }
@@ -140,10 +150,13 @@ namespace trees
                 g.FillRectangle(Brushes.Blue, dot.X - 2, dot.Y - 2, 5, 5);
             }
 
-            //foreach (Branch branch in branches)
-            //{
-            //    g.FillEllipse(Brushes.DarkGreen, branch.End.X - leafRadius, branch.End.Y - leafRadius, leafRadius * 2, leafRadius * 2);
-            //}
+            if (leaves)
+            {
+                foreach (Branch branch in branches)
+                {
+                    g.FillEllipse(Brushes.DarkGreen, branch.End.X - leafRadius, branch.End.Y - leafRadius, leafRadius * 2, leafRadius * 2);
+                }
+            }
             foreach (Branch branch in branches)
             {
                 g.DrawLine(branchCol, branch.Start.X, branch.Start.Y, branch.End.X, branch.End.Y);
@@ -155,7 +168,7 @@ namespace trees
             e.Graphics.DrawImageUnscaled(treeTexture, 0, 0);
             if (dragging)
             {
-                e.Graphics.DrawRectangle(Pens.Blue,GetNormalizedRectangle(start,end));
+                e.Graphics.DrawRectangle(Pens.Blue, GetNormalizedRectangle(start, end));
             }
             else
             {
@@ -205,7 +218,7 @@ namespace trees
             RegenerateDots();
             //Reset();
             //UpdateBranches();
-            //DrawBranches();
+            DrawBranches();
             Invalidate();
         }
 
@@ -252,7 +265,7 @@ namespace trees
                 Point temp = start;
             }
             dragging = false;
-            branchBounds = GetNormalizedRectangle(start,end);
+            branchBounds = GetNormalizedRectangle(start, end);
             //Reset();
             RegenerateDotBounds(branchBounds);
             RegenerateDots();
@@ -262,14 +275,20 @@ namespace trees
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode==Keys.Space)
-            {
-                UpdateBranches();
-                DrawBranches();
-                Invalidate();
-            }
-            e.Handled = true;
-            e.SuppressKeyPress = true;
+            
+            //e.Handled = true;
+            //e.SuppressKeyPress = true;
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            leaves = !leaves;
+            DrawBranches();
+        }
+
+        private void numericUpDown5_ValueChanged(object sender, EventArgs e)
+        {
+            leafRadius = (int)numericUpDown5.Value;
         }
 
         private Rectangle GetNormalizedRectangle(Point p1, Point p2)
