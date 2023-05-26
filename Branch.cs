@@ -12,6 +12,7 @@ namespace trees
         public Vector2 End;
         public List<Branch> Children;
         public bool Finished = false;
+        public bool Stem = false;
         public Branch(Vector2 start, Vector2 end)
         {
             Start = start; End = end;

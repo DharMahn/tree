@@ -6,9 +6,9 @@ namespace trees
     public partial class Form1 : Form
     {
         Bitmap treeTexture;
-        List<Branch> branches;
-        List<Vector2> targetDots;
-        static Random r = new();
+        List<Branch> branches = new();
+        List<Vector2> targetDots = new();
+        static readonly Random r = new();
         public float branchLen = 20;
         Rectangle branchBounds;
         int boundsBorder = 25;
@@ -42,7 +42,6 @@ namespace trees
             {
                 UpdateBranches();
                 DrawBranches();
-                Invalidate();
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
@@ -73,10 +72,11 @@ namespace trees
             RegenerateDots();
             branches.Add(new(new(treeTexture.Width / 2, treeTexture.Height), new(treeTexture.Width / 2, treeTexture.Height - branchLen)));
             stem = branches.Last();
+            stem.Stem = true;
 
             g = Graphics.FromImage(treeTexture);
         }
-        Branch stem = null;
+        Branch? stem = null;
         void UpdateBranches()
         {
             //List<Branch> childless = new();
@@ -93,6 +93,7 @@ namespace trees
                 stem.AddChild(b);
                 branches.Add(b);
                 stem = b;
+                stem.Stem = true;
             }
 
             var list = branches.Where(x => !x.Finished).ToList();
@@ -117,7 +118,7 @@ namespace trees
                     }
                     avg /= closeEnoughDots.Count;
                     avg = Vector2.Normalize(avg);
-                    Branch newBranch = new Branch(
+                    Branch newBranch = new(
                             new Vector2(
                                 branch.End.X,
                                 branch.End.Y),
@@ -135,13 +136,12 @@ namespace trees
                 else
                 {
                     //use this for optimization
-                    //branch.Finished = true;
+                    branch.Finished = true;
                     //branches.Remove(branch);
                 }
             }
-
         }
-        Pen branchCol = new Pen(Color.FromArgb(255, Color.Brown), 5);
+        readonly Pen branchCol = new(Color.FromArgb(255, Color.Brown), 5);
         void DrawBranches()
         {
             g.Clear(SystemColors.Control);
@@ -152,7 +152,7 @@ namespace trees
 
             if (leaves)
             {
-                foreach (Branch branch in branches)
+                foreach (Branch branch in branches.Where(x=>!x.Stem))
                 {
                     g.FillEllipse(Brushes.DarkGreen, branch.End.X - leafRadius, branch.End.Y - leafRadius, leafRadius * 2, leafRadius * 2);
                 }
@@ -161,7 +161,7 @@ namespace trees
             {
                 g.DrawLine(branchCol, branch.Start.X, branch.Start.Y, branch.End.X, branch.End.Y);
             }
-
+            Invalidate();
         }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -195,14 +195,12 @@ namespace trees
         {
             Reset();
             DrawBranches();
-            Invalidate();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
             UpdateBranches();
             DrawBranches();
-            Invalidate();
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
@@ -219,7 +217,6 @@ namespace trees
             //Reset();
             //UpdateBranches();
             DrawBranches();
-            Invalidate();
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -229,14 +226,12 @@ namespace trees
                 UpdateBranches();
             }
             DrawBranches();
-            Invalidate();
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
             UpdateBranches();
             DrawBranches();
-            Invalidate();
         }
         Point start, end;
         bool dragging = false;
@@ -260,24 +255,11 @@ namespace trees
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
             end = PointToClient(Cursor.Position);
-            if (end.X < start.X || end.Y < start.Y)
-            {
-                Point temp = start;
-            }
             dragging = false;
             branchBounds = GetNormalizedRectangle(start, end);
-            //Reset();
             RegenerateDotBounds(branchBounds);
             RegenerateDots();
             DrawBranches();
-            Invalidate();
-        }
-
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
-            
-            //e.Handled = true;
-            //e.SuppressKeyPress = true;
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
@@ -289,9 +271,10 @@ namespace trees
         private void numericUpDown5_ValueChanged(object sender, EventArgs e)
         {
             leafRadius = (int)numericUpDown5.Value;
+            DrawBranches();
         }
 
-        private Rectangle GetNormalizedRectangle(Point p1, Point p2)
+        private static Rectangle GetNormalizedRectangle(Point p1, Point p2)
         {
             int x = Math.Min(p1.X, p2.X);
             int y = Math.Min(p1.Y, p2.Y);
